@@ -223,6 +223,9 @@ def create_sdf_obj(sdfcommand, marching_cube_command, norm_mesh_dir, sdf_dir, ob
     if not os.path.exists(sdf_sub_dir): os.makedirs(sdf_sub_dir)
     
     sdf_file = os.path.join(sdf_sub_dir, "isosurf.sdf")
+    print("isosurf-file", sdf_file)
+    print("norm_mesh_sub", norm_mesh_sub_dir)
+    print("obj", obj)
 
     if h5_file is None:
         h5_file = obj.replace('.obj', '_sdf.h5')
@@ -268,6 +271,7 @@ def process_one_obj(sdfcommand,
     dataroot = '../../data'
 
     tmp_dir = f'tmp/for_sdf'
+    tmp_dir = '/graphics/scratch2/students/phung/PycharmProjects/Evaluation/tmp/for_sdf'
     model_dir = f'{tmp_dir}/model'
     norm_mesh_dir = f'{tmp_dir}/norm_mesh'
     sdf_dir = f'{tmp_dir}/sdf'
@@ -357,6 +361,7 @@ def process_obj(obj_file, isosurface_dir, sdf_cmd, mcube_cmd, reduce=1, h5_file=
     os.environ['LD_LIBRARY_PATH'] = '$LD_LIBRARY_PATH:./isosurface/:./isosurface/tbb/tbb2018_20180822oss/lib/intel64/gcc4.7:/opt/intel/lib/intel64:/opt/intel/mkl/lib/intel64:/usr/local/lib64:/usr/local/lib:/usr/local/cuda/lib64'
 
     tmp_dir = f'tmp/for_sdf'
+    tmp_dir = '/graphics/scratch2/students/phung/PycharmProjects/Evaluation/tmp/for_sdf'
     model_dir = f'{tmp_dir}/model'
     norm_mesh_dir = f'{tmp_dir}/norm_mesh'
     sdf_dir = f'{tmp_dir}/sdf'

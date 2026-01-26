@@ -24,10 +24,10 @@ class ShapeNetDataset(BaseDataset):
         self.opt = opt
         self.max_dataset_size = opt.max_dataset_size
         self.res = res
-
-        dataroot = opt.dataroot
+        abs_path = '/graphics/scratch2/students/phung/PycharmProjects/SDFusion/'
+        dataroot = os.path.join(abs_path, opt.dataroot)
         # with open(f'{dataroot}/ShapeNet/info.json') as f:
-        with open(f'dataset_info_files/info-shapenet.json') as f:
+        with open(f'{abs_path}dataset_info_files/info-shapenet.json') as f:
             self.info = json.load(f)
             
         self.cat_to_id = self.info['cats']
@@ -43,7 +43,7 @@ class ShapeNetDataset(BaseDataset):
         for c in all_cats:
             synset = self.info['cats'][c]
             # with open(f'{dataroot}/ShapeNet/filelists/{synset}_{phase}.lst') as f:
-            with open(f'dataset_info_files/ShapeNet_filelists/{synset}_{phase}.lst') as f:
+            with open(f'{abs_path}dataset_info_files/ShapeNet_filelists/{synset}_{phase}.lst') as f:
                 model_list_s = []
                 for l in f.readlines():
                     model_id = l.rstrip('\n')

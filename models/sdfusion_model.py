@@ -445,6 +445,58 @@ class SDFusionModel(BaseModel):
         return self.gen_df
 
     @torch.no_grad()
+    def shape_comp_multiple_xyz_dict(self, shape, xyz_dicts, ngen=1, ddim_steps=100, ddim_eta=0.0, scale=None):
+        from utils.demo_util import get_partial_shape
+        ddim_sampler = DDIMSampler(self)
+
+        if scale is None:
+            scale = self.scale
+
+        if ddim_steps is None:
+            ddim_steps = self.ddim_steps
+
+        if shape.dim() == 4:
+            shape = shape.unsqueeze(0)
+            shape = shape.to(self.device)
+
+        self.df.eval()
+        self.gen_df = []
+
+        self.org_shape = shape
+
+        for xyz_dict in xyz_dicts:
+            # get noise, denoise, and decode with vqvae
+            B = ngen
+            z = self.vqvae(self.org_shape, forward_no_quant=True, encode_only=True)
+
+            # get partial shape
+            ret = get_partial_shape(self.org_shape, xyz_dict=xyz_dict, z=z)
+
+            x_mask, z_mask = ret['shape_mask'], ret['z_mask']
+
+            # for vis purpose
+            self.x_part = ret['shape_part']
+            self.x_missing = ret['shape_missing']
+
+            shape = self.z_shape
+            c = None
+            samples, intermediates = ddim_sampler.sample(S=ddim_steps,
+                                                         batch_size=B,
+                                                         shape=shape,
+                                                         conditioning=c,
+                                                         verbose=False,
+                                                         x0=z,
+                                                         mask=z_mask,
+                                                         unconditional_guidance_scale=scale,
+                                                         #  unconditional_conditioning=uc,
+                                                         eta=ddim_eta)
+
+            # decode z
+            self.gen_df.append(self.vqvae_module.decode_no_quant(samples))
+
+        return self.gen_df
+
+    @torch.no_grad()
     def eval_metrics(self, dataloader, thres=0.0, global_step=0):
         self.eval()
         

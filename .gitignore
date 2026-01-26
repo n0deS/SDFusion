@@ -27,3 +27,8 @@ demo_data/
 # bak
 bak*/
 
+.idea/
+
+evaluation
+for_phi
+*.obj

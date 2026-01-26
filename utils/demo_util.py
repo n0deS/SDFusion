@@ -91,11 +91,11 @@ class SDFusionOpt(BaseOpt):
             vq_ckpt_path='saved_ckpt/vqvae-snet-all.pth',
         ):
         self.model = 'sdfusion'
-        self.df_cfg = 'configs/sdfusion_snet.yaml'
+        self.df_cfg = '/graphics/scratch2/students/phung/PycharmProjects/SDFusion/configs/sdfusion_snet.yaml'
         self.ckpt = ckpt_path
         
         self.vq_model = 'vqvae'
-        self.vq_cfg = 'configs/vqvae_snet.yaml'
+        self.vq_cfg = '/graphics/scratch2/students/phung/PycharmProjects/SDFusion/configs/vqvae_snet.yaml'
         self.vq_ckpt = vq_ckpt_path
         self.vq_dset = 'snet'
         self.vq_cat = 'all'

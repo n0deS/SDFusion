@@ -55,6 +55,10 @@ def read_sdf(sdf_h5_file, resolution=64):
     sdf = sdf[None, ...]
     return sdf
 
+def save_mesh_as_obj(mesh, out_name='1.obj'):
+    #verts, faces = mesh.get_mesh_verts_faces(0)
+    pytorch3d.io.save_obj(f=out_name, verts=mesh.verts_packed(), faces=mesh.faces_packed())
+
 def save_mesh_as_gif(mesh_renderer, mesh, nrow=3, fps=450, out_name='1.gif'):
     """ save batch of mesh into gif """
 
