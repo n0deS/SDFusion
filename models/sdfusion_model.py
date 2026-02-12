@@ -461,6 +461,7 @@ class SDFusionModel(BaseModel):
 
         self.df.eval()
         self.gen_df = []
+        self.x_parts = []
 
         self.org_shape = shape
 
@@ -477,7 +478,7 @@ class SDFusionModel(BaseModel):
             # for vis purpose
             self.x_part = ret['shape_part']
             self.x_missing = ret['shape_missing']
-
+            self.x_parts.append(ret['shape_part'])
             shape = self.z_shape
             c = None
             samples, intermediates = ddim_sampler.sample(S=ddim_steps,
@@ -494,7 +495,7 @@ class SDFusionModel(BaseModel):
             # decode z
             self.gen_df.append(self.vqvae_module.decode_no_quant(samples))
 
-        return self.gen_df
+        return self.gen_df, self.x_parts
 
     @torch.no_grad()
     def eval_metrics(self, dataloader, thres=0.0, global_step=0):
