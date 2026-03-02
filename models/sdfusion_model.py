@@ -445,6 +445,109 @@ class SDFusionModel(BaseModel):
         return self.gen_df
 
     @torch.no_grad()
+    def shape_comp_with_mask(self, shape, mask, ngen=1, ddim_steps=100, ddim_eta=0.0, scale=None):
+
+        ddim_sampler = DDIMSampler(self)
+
+        if scale is None:
+            scale = self.scale
+
+        if ddim_steps is None:
+            ddim_steps = self.ddim_steps
+
+        if shape.dim() == 4:
+            shape = shape.unsqueeze(0)
+            shape = shape.to(self.device)
+
+        self.df.eval()
+
+        # get noise, denoise, and decode with vqvae
+        B = ngen
+        z = self.vqvae(shape, forward_no_quant=True, encode_only=True)
+
+        mask_float = mask.float()
+        zH, zW, zD = z.shape[-3], z.shape[-2], z.shape[-1]
+
+        pooled_mask = F.adaptive_max_pool3d(mask_float, output_size=(zH, zW, zD))
+        # we have it inverted: ddim expects 1.0 for keep and 0.0 for masked
+        z_mask = 1.0 - pooled_mask
+
+        shape = self.z_shape
+        c = None
+        samples, intermediates = ddim_sampler.sample(S=ddim_steps,
+                                                     batch_size=B,
+                                                     shape=shape,
+                                                     conditioning=c,
+                                                     verbose=False,
+                                                     x0=z,
+                                                     mask=z_mask,
+                                                     unconditional_guidance_scale=scale,
+                                                     #  unconditional_conditioning=uc,
+                                                     eta=ddim_eta)
+
+        # decode z
+        self.gen_df = self.vqvae_module.decode_no_quant(samples)
+
+        return self.gen_df
+
+    @torch.no_grad()
+    def shape_comp_from_partial(self, partial_sdf, ngen=1, ddim_steps=100, ddim_eta=0.0, scale=None):
+        """
+        Run shape completion from a pre-masked partial SDF.
+        
+        This method accepts a partial SDF (already masked) and runs completion
+        using the unified downsampling approach for fair benchmarking.
+        
+        Args:
+            partial_sdf: Partial SDF tensor at native resolution (e.g., 64³)
+            ngen: Number of generations
+            ddim_steps: DDIM sampling steps
+            ddim_eta: DDIM eta parameter
+            scale: Classifier-free guidance scale
+        
+        Returns:
+            Completed SDF tensor
+        """
+        ddim_sampler = DDIMSampler(self)
+
+        if scale is None:
+            scale = self.scale
+
+        if ddim_steps is None:
+            ddim_steps = self.ddim_steps
+
+        if partial_sdf.dim() == 4:
+            partial_sdf = partial_sdf.unsqueeze(0)
+        partial_sdf = partial_sdf.to(self.device)
+
+        self.df.eval()
+        self.gen_df = []
+
+        # Encode partial SDF to latent space
+        z = self.vqvae(partial_sdf, forward_no_quant=True, encode_only=True)
+
+        # No masking needed - already partial
+        # Create a mask that keeps all tokens (full completion)
+        z_mask = torch.ones_like(z).to(device=self.device)
+
+        # DDIM sampling
+        shape = self.z_shape #z.shape[1:]  # (C, H, W, D)
+        samples, _ = ddim_sampler.sample(
+            S=ddim_steps,
+            batch_size=ngen,
+            shape=shape,
+            x0=z,
+            mask=z_mask,
+            unconditional_guidance_scale=scale,
+            eta=ddim_eta
+        )
+
+        # Decode
+        self.gen_df = self.vqvae_module.decode_no_quant(samples)
+
+        return self.gen_df
+
+    @torch.no_grad()
     def shape_comp_multiple_xyz_dict(self, shape, xyz_dicts, ngen=1, ddim_steps=100, ddim_eta=0.0, scale=None):
         from utils.demo_util import get_partial_shape
         ddim_sampler = DDIMSampler(self)
